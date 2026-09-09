@@ -1,0 +1,376 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: #0e1a3e;
+  color: #ffffff;
+  min-height: 100%;
+}
+
+body {
+  font-feature-settings: "ss01", "cv01";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* =====================================================================
+   Light theme — "Doctrine Daylight"
+   Activated by <html class="light"> (set by ThemeProvider).
+   Palette:
+     bg          plain white       #ffffff
+     surface     white             #ffffff
+     ink         deep navy         #1a2b56  (brand)
+     ink-soft    mid navy          #2e457c
+     accent      antique gold      #c9a959  /  deeper #8a7235
+   ===================================================================== */
+html.light { color-scheme: light; }
+
+html.light {
+  background:
+    radial-gradient(ellipse 1100px 700px at 18% -10%, rgba(201,169,89,0.12), transparent 60%),
+    radial-gradient(ellipse 900px 600px  at 92% 110%, rgba(26,43,86,0.06),   transparent 55%),
+    #ffffff !important;
+  color: #1a2b56 !important;
+}
+html.light body {
+  background: transparent !important;
+  color: #1a2b56 !important;
+}
+
+/* Page-level navy surfaces become transparent so the white shows through. */
+html.light .bg-ink-950 { background-color: transparent !important; }
+
+/* Cards / containers — pure white with a navy-tinted shadow.
+   Shadow + border together produce real depth on light mode. */
+html.light .bg-ink-900\/60,
+html.light .bg-ink-900\/40,
+html.light .bg-ink-900\/95,
+html.light .bg-ink-900,
+html.light .bg-ink-800\/80,
+html.light .bg-ink-800,
+html.light .bg-ink-700 {
+  background-color: #ffffff !important;
+}
+
+html.light .panel {
+  background-color: #ffffff !important;
+  border-color: rgba(201,169,89,0.45) !important;
+  box-shadow:
+    0 1px 2px rgba(26, 43, 86, 0.06),
+    0 10px 30px -16px rgba(26, 43, 86, 0.20) !important;
+}
+html.light .panel-hover:hover {
+  border-color: rgba(201,169,89,0.75) !important;
+  box-shadow:
+    0 2px 6px rgba(26, 43, 86, 0.08),
+    0 18px 42px -18px rgba(201, 169, 89, 0.45) !important;
+}
+
+/* Sidebar/aside — faintly tinted ivory so it separates from the white main area */
+html.light aside.bg-ink-900\/60 { background-color: #f9f7ef !important; }
+
+/* Modal panel gradient (Modal.tsx + WizardWelcome both use this combo) */
+html.light .bg-gradient-to-br.from-ink-900.via-ink-800.to-ink-900,
+html.light .from-ink-900.via-ink-800.to-ink-900 {
+  background-image: linear-gradient(to bottom right, #ffffff 0%, #fbf6e6 50%, #ffffff 100%) !important;
+}
+html.light .bg-gradient-to-br.from-ink-900.via-ink-800.to-ink-900 {
+  box-shadow:
+    0 4px 12px rgba(26, 43, 86, 0.10),
+    0 30px 60px -20px rgba(201, 169, 89, 0.40) !important;
+}
+
+/* Decorative gradient cards (e.g. profile card uses bg-panel-gradient) */
+html.light .bg-panel-gradient {
+  background-image: linear-gradient(135deg, rgba(201,169,89,0.22) 0%, #ffffff 65%) !important;
+}
+
+/* Text — navy hierarchy on white. Hint shades stay readable. The half-step
+   shades (75, 65, 55, 45, 35, 25) interpolate the scale so any text-white/N
+   used in the codebase has a deliberate value on white. */
+html.light .text-white       { color: #1a2b56 !important; }
+html.light .text-white\/90,
+html.light .text-white\/85   { color: #1a2b56 !important; }
+html.light .text-white\/80   { color: #243869 !important; }
+html.light .text-white\/75   { color: #293f73 !important; }
+html.light .text-white\/70   { color: #2e457c !important; }
+html.light .text-white\/65   { color: #344e88 !important; }
+html.light .text-white\/60   { color: #3a5694 !important; }
+html.light .text-white\/55   { color: #415b97 !important; }
+html.light .text-white\/50   { color: #475f9a !important; }
+html.light .text-white\/45   { color: #4f67a0 !important; }
+html.light .text-white\/40   { color: #566ea6 !important; }
+html.light .text-white\/35   { color: #5e74ab !important; }
+html.light .text-white\/30   { color: #6679b0 !important; }
+html.light .text-white\/25   { color: #7287b8 !important; }
+html.light .placeholder\:text-white\/30::placeholder { color: #7a8cbe !important; }
+
+/* Answer-review semantic text colours. Dark defaults (light text); light-theme
+   overrides use saturated navy/green/red that stay readable on the white card.
+   Backgrounds are translucent tints applied inline, which read on both themes. */
+.rv-good { color: #34d399; }
+.rv-bad  { color: #f87171; }
+html.light .rv-good { color: #0f7a57 !important; }
+html.light .rv-bad  { color: #b91c1c !important; }
+
+/* Gold accents — make sure the lighter end of the gold scale is visible on white. */
+html.light .gold-text {
+  background-image: linear-gradient(135deg, #a88c45 0%, #8a7235 55%, #5e4c22 100%) !important;
+}
+html.light .text-gold-100    { color: #5e4c22 !important; }
+html.light .text-gold-200    { color: #6b5a28 !important; }
+html.light .text-gold-300    { color: #7a6830 !important; }
+html.light .text-gold-400    { color: #8a7235 !important; }
+html.light .text-gold-100\/80 { color: rgba(94, 76, 34, 0.92) !important; }
+html.light .text-gold-300\/80 { color: rgba(122, 104, 48, 0.92) !important; }
+
+/* Borders — antique gold across the board so dividers stay visible. */
+html.light .border-white\/5    { border-color: rgba(201,169,89,0.22) !important; }
+html.light .border-white\/10   { border-color: rgba(201,169,89,0.30) !important; }
+html.light .border-white\/20   { border-color: rgba(201,169,89,0.40) !important; }
+html.light .border-gold-500\/20 { border-color: rgba(201,169,89,0.38) !important; }
+html.light .border-gold-500\/30 { border-color: rgba(201,169,89,0.55) !important; }
+html.light .border-gold-500\/40 { border-color: rgba(201,169,89,0.65) !important; }
+html.light .border-gold-500\/50 { border-color: rgba(201,169,89,0.75) !important; }
+html.light .border-gold-400\/40,
+html.light .border-gold-400\/60,
+html.light .hover\:border-gold-400\/60:hover { border-color: rgba(168,122,20,0.65) !important; }
+
+/* Hover / soft backgrounds */
+html.light .bg-white\/5  { background-color: rgba(26,43,86,0.05) !important; }
+html.light .bg-white\/10 { background-color: rgba(26,43,86,0.08) !important; }
+html.light .hover\:bg-white\/5:hover  { background-color: rgba(26,43,86,0.05) !important; }
+html.light .hover\:bg-white\/10:hover { background-color: rgba(26,43,86,0.08) !important; }
+html.light .bg-gold-500\/10 { background-color: rgba(201,169,89,0.18) !important; }
+html.light .bg-gold-500\/15 { background-color: rgba(201,169,89,0.24) !important; }
+html.light .hover\:bg-gold-500\/10:hover { background-color: rgba(201,169,89,0.24) !important; }
+
+/* Modal backdrop — soften the dark scrim with a navy tint */
+html.light .bg-black\/70 { background-color: rgba(14,26,62,0.32) !important; }
+html.light .bg-black\/80 { background-color: rgba(14,26,62,0.42) !important; }
+
+/* Nav links — muted navy, with an antique-gold active state */
+html.light .nav-link {
+  color: #2e457c !important;
+}
+html.light .nav-link:hover {
+  color: #1a2b56 !important;
+  background-color: rgba(201,169,89,0.12) !important;
+}
+html.light .nav-link-active {
+  background-color: rgba(201,169,89,0.20) !important;
+  color: #5e4c22 !important;
+  border-color: rgba(201,169,89,0.60) !important;
+}
+
+/* Inputs */
+html.light .input-field {
+  background-color: #ffffff !important;
+  color: #1a2b56 !important;
+  border-color: rgba(201,169,89,0.50) !important;
+  box-shadow: 0 1px 2px rgba(26,43,86,0.04) inset !important;
+}
+html.light .input-field:focus {
+  border-color: #c9a959 !important;
+  box-shadow: 0 0 0 3px rgba(201,169,89,0.28) !important;
+}
+
+/* Buttons */
+html.light .btn-ghost { color: #5e4c22 !important; }
+html.light .btn-ghost:hover {
+  background-color: rgba(201,169,89,0.14) !important;
+  color: #3d3216 !important;
+}
+html.light .btn-outline {
+  color: #5e4c22 !important;
+  border-color: rgba(201,169,89,0.70) !important;
+}
+html.light .btn-outline:hover { background-color: rgba(201,169,89,0.16) !important; }
+
+/* Badge */
+html.light .badge {
+  background-color: rgba(201,169,89,0.18) !important;
+  color: #5e4c22 !important;
+  border-color: rgba(201,169,89,0.55) !important;
+}
+
+/* Avatar / outlined gold rings */
+html.light .ring-gold-500\/40 {
+  --tw-ring-color: rgba(201,169,89,0.6) !important;
+}
+
+/* Shimmer text — darker antique gold gradient for white backgrounds */
+html.light .magic-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    #8a7235 0%,
+    #c9a959 18%,
+    #5e4c22 32%,
+    #8a7235 48%,
+    #c9a959 64%,
+    #5e4c22 80%,
+    #8a7235 100%
+  ) !important;
+}
+
+/* Hero radial layer used on the landing page — softer gold over white */
+html.light .bg-hero-radial {
+  background-image:
+    radial-gradient(ellipse at top, rgba(201,169,89,0.22), transparent 60%),
+    radial-gradient(ellipse at bottom right, rgba(26,43,86,0.06), transparent 50%) !important;
+}
+
+/* Scrollbar */
+html.light ::-webkit-scrollbar-track { background: #f1ecdb !important; }
+html.light ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c9a959, #8a7235) !important;
+}
+
+/* Magical shimmer text — a moving antique-gold sheen reads across the gradient. */
+.magic-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    #e8d595 0%,
+    #ffffff 18%,
+    #c9a959 32%,
+    #e8d595 48%,
+    #ffffff 64%,
+    #c9a959 80%,
+    #e8d595 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@layer components {
+  .gold-text {
+    @apply bg-gold-gradient bg-clip-text text-transparent;
+  }
+  .gold-border {
+    @apply border border-gold-500/40;
+  }
+  .panel {
+    @apply rounded-2xl border border-gold-500/20 bg-ink-900/60 backdrop-blur p-6;
+  }
+  .panel-hover {
+    @apply hover:border-gold-400/60 hover:shadow-gold transition-all duration-200;
+  }
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-gold-gradient px-5 py-2.5 font-semibold text-ink-950 shadow-gold hover:brightness-110 active:scale-[0.98] transition;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-gold-500/50 px-5 py-2.5 font-semibold text-gold-200 hover:bg-gold-500/10 transition;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm text-gold-100/80 hover:text-gold-100 hover:bg-white/5 transition;
+  }
+  .input-field {
+    @apply w-full rounded-lg bg-ink-800/80 border border-gold-500/20 px-4 py-2.5 text-white placeholder:text-white/30 focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-400/30 transition;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full border border-gold-500/30 bg-gold-500/10 px-2.5 py-0.5 text-xs font-medium text-gold-200;
+  }
+  .nav-link {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/5 transition;
+  }
+  .nav-link-active {
+    @apply bg-gold-500/15 text-gold-100 border border-gold-500/30;
+  }
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0e1a3e; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #8a7235, #c9a959);
+  border-radius: 8px;
+}
+
+/* Invisible-but-working scrollbars for the Mock Practice exam surfaces. */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Exam surfaces keep true white text even in the app's light theme
+   (html.light remaps .text-white to navy for the dashboard). */
+html.light .exam-surface .text-white {
+  color: #ffffff !important;
+}
+
+/* While an exam is open, the viewport scrollbar is hidden but still scrolls. */
+html.exam-open,
+html.exam-open body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html.exam-open::-webkit-scrollbar,
+html.exam-open body::-webkit-scrollbar {
+  display: none;
+}
+
+/* Rich pasted question content (teacher builder editor + student exam view):
+   pasted formatting survives, and tables always show borders — including
+   merged rows/columns via rowspan/colspan — even when the pasted source
+   carried no border styling of its own. */
+.pasted-rich table {
+  border-collapse: collapse;
+  margin: 10px 0;
+  max-width: 100%;
+}
+.pasted-rich td,
+.pasted-rich th {
+  border: 1px solid #8f8f8f;
+  padding: 6px 14px;
+  vertical-align: top;
+  text-align: left;
+}
+.pasted-rich th {
+  background: rgba(127, 127, 127, 0.14);
+  font-weight: 700;
+}
+.pasted-rich p {
+  margin: 0 0 10px;
+}
+.pasted-rich ul,
+.pasted-rich ol {
+  margin: 0 0 10px;
+  padding-left: 26px;
+}
+.pasted-rich ul {
+  list-style: disc;
+}
+.pasted-rich ol {
+  list-style: decimal;
+}
+.pasted-rich blockquote {
+  border-left: 3px solid #c9c9c9;
+  margin: 0 0 10px;
+  padding-left: 12px;
+}
+.pasted-rich h1,
+.pasted-rich h2,
+.pasted-rich h3,
+.pasted-rich h4,
+.pasted-rich h5,
+.pasted-rich h6 {
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+.pasted-rich h1 { font-size: 1.35em; }
+.pasted-rich h2 { font-size: 1.25em; }
+.pasted-rich h3 { font-size: 1.15em; }
+.pasted-rich[contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  color: #aaa;
+  font-style: italic;
+}
