@@ -259,7 +259,10 @@ export default function ListeningExam({ test, userId, mode, answerKey, onExit }:
   );
 
   // ------------------------------- navigation -------------------------------
-  const activePartIndex = slots[current].partIndex;
+  // A test with no question slots (empty/misconfigured) falls through to the
+  // "no questions" screen below — guard every slots[current] read so nothing
+  // crashes before that check runs.
+  const activePartIndex = slots[current]?.partIndex ?? 0;
   const part = test.parts[activePartIndex];
 
   const goTo = useCallback(
@@ -272,7 +275,8 @@ export default function ListeningExam({ test, userId, mode, answerKey, onExit }:
   useEffect(() => {
     if (lastScrolled.current === current) return;
     lastScrolled.current = current;
-    const n = slots[current].numbers[0];
+    const n = slots[current]?.numbers[0];
+    if (n === undefined) return;
     requestAnimationFrame(() => {
       const el = gapEls.current.get(n);
       if (!el) return;
@@ -465,6 +469,34 @@ export default function ListeningExam({ test, userId, mode, answerKey, onExit }:
               Save and exit
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // This test has no question sections yet (e.g. previewed/opened before the
+  // teacher added content) — nothing below this point is safe to render.
+  if (slots.length === 0) {
+    return (
+      <div
+        className="exam-surface fixed inset-0 z-[300] grid place-items-center"
+        style={{ background: theme.pageBg, fontFamily: "Arial, Helvetica, sans-serif" }}
+      >
+        <div
+          className="w-[460px] max-w-[92vw] rounded-lg border p-8 text-center shadow-xl"
+          style={{ background: theme.contentBg, borderColor: theme.border, color: theme.fg }}
+        >
+          <h2 className="text-xl font-bold">No questions yet</h2>
+          <p className="mt-2 text-sm" style={{ color: theme.muted }}>
+            This listening test doesn&apos;t have any question sections yet.
+          </p>
+          <button
+            type="button"
+            onClick={onExit}
+            className="mt-5 rounded bg-[#1f1f1f] px-5 py-2 text-sm font-medium text-white hover:bg-black"
+          >
+            Back
+          </button>
         </div>
       </div>
     );

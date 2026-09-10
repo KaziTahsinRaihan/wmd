@@ -10,10 +10,12 @@ import {
   UserCog,
   Upload,
   Trash2,
+  KeyRound,
 } from "lucide-react";
 import { useAuth, User } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
 import Modal from "./Modal";
+import ChangeCredentialsModal from "./ChangeCredentialsModal";
 
 function initialsFrom(name: string) {
   return name
@@ -53,6 +55,7 @@ export default function UserMenu() {
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -123,6 +126,19 @@ export default function UserMenu() {
 
             <button
               type="button"
+              onClick={() => {
+                setOpen(false);
+                setChangingPassword(true);
+              }}
+              className="nav-link w-full"
+              role="menuitem"
+            >
+              <KeyRound className="h-4 w-4" />
+              <span className="flex-1 text-left">Change password</span>
+            </button>
+
+            <button
+              type="button"
               onClick={toggle}
               className="nav-link w-full"
               role="menuitem"
@@ -159,6 +175,12 @@ export default function UserMenu() {
           updateProfile(patch);
           setEditing(false);
         }}
+      />
+
+      <ChangeCredentialsModal
+        open={changingPassword}
+        onClose={() => setChangingPassword(false)}
+        currentEmail={user.email}
       />
     </div>
   );

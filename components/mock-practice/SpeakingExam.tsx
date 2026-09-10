@@ -528,7 +528,23 @@ export default function SpeakingExam({ test, userId, onExit, submitTarget }: Spe
   }
 
   // --------------------------------- exam ----------------------------------
-  if (!task) return null;
+  // No question tasks at all (e.g. previewed/opened before the teacher added
+  // any Part 1/2/3 content) — nothing below this point has a task to render.
+  if (!task) {
+    return surface(
+      <main className="grid min-h-0 flex-1 place-items-center" style={{ background: theme.contentBg }}>
+        <div className="w-[460px] max-w-[92vw] rounded-lg border p-8 text-center shadow-xl" style={{ background: theme.contentBg, borderColor: theme.border }}>
+          <h2 className="text-xl font-bold">No questions yet</h2>
+          <p className="mt-2 text-sm" style={{ color: theme.muted }}>
+            This speaking test doesn&apos;t have any questions yet.
+          </p>
+          <button type="button" onClick={onExit} className="mt-5 rounded bg-[#1f1f1f] px-5 py-2 text-sm font-medium text-white hover:bg-black">
+            Back
+          </button>
+        </div>
+      </main>,
+    );
+  }
   const meta = PART_META[task.part];
   const rec = recordings[task.number];
   const partTasks = (p: 1 | 2 | 3) => tasks.filter((t) => t.part === p);

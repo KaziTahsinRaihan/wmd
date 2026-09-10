@@ -10,6 +10,7 @@ import type { ReadingGroup, ReadingTest, PassageSection } from "./reading-mock";
 import type { WritingExam, WritingTask } from "./writing-exam";
 import type { SpeakingTest, SpeakingTopic } from "./speaking-mock";
 import type { AnswerKey } from "./listening-mock";
+import { apiFetch } from "./api";
 
 export type { AnswerKey };
 
@@ -728,10 +729,8 @@ export type SavedAuthoredQuestion = {
 };
 
 export async function listAuthored(): Promise<SavedAuthoredQuestion[]> {
-  const res = await fetch("/api/questions", { cache: "no-store" });
-  const json = await res.json();
-  if (!json.ok) throw new Error(json.error || "Failed to load questions");
-  return (json.questions as SavedAuthoredQuestion[]).filter((q) => q.payload?.__authored);
+  const json = await apiFetch<{ questions: SavedAuthoredQuestion[] }>("/api/questions");
+  return json.questions.filter((q) => q.payload?.__authored);
 }
 
 export async function saveAuthored(test: AuthoredTest): Promise<SavedAuthoredQuestion> {
@@ -743,20 +742,16 @@ export async function saveAuthored(test: AuthoredTest): Promise<SavedAuthoredQue
         name: test.name || "Untitled question",
         payload: { __authored: true, test },
       };
-  const res = await fetch("/api/questions", {
+  const json = await apiFetch<{ question: SavedAuthoredQuestion }>("/api/questions", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  const json = await res.json();
-  if (!json.ok) throw new Error(json.error || "Save failed");
   return json.question;
 }
 
 export async function deleteAuthored(id: string): Promise<void> {
-  await fetch("/api/questions", {
+  await apiFetch("/api/questions", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ op: "deleteQuestion", id }),
   });
 }

@@ -1,5 +1,9 @@
 # dependencies
 /node_modules
+/server/node_modules
+
+# uploaded files (backend)
+/server/uploads
 
 # next.js
 /.next/

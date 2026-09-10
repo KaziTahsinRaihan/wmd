@@ -7,6 +7,7 @@ import {
   useState,
   ReactNode,
 } from "react";
+import { apiFetch, ApiError, getToken, setToken } from "./api";
 
 export type Role = "student" | "instructor" | "admin";
 
@@ -36,127 +37,129 @@ type AuthContextValue = {
     name: string;
     email: string;
     password: string;
-    role: Role;
+    role: "student" | "instructor";
     gender?: Gender;
-  }) => User;
-  login: (email: string, role: Role) => User | null;
+  }) => Promise<User>;
+  login: (email: string, password: string, role: Role) => Promise<User>;
   logout: () => void;
   updateProfile: (patch: Partial<User>) => void;
+  changeCredentials: (data: {
+    currentPassword: string;
+    newEmail?: string;
+    newPassword?: string;
+  }) => Promise<User>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const STORAGE_KEY = "wise-mans-doctrine:user";
-const REGISTRY_KEY = "wise-mans-doctrine:users";
+const USER_CACHE_KEY = "wise-mans-doctrine:user";
 
-function readRegistry(): User[] {
-  if (typeof window === "undefined") return [];
+function readCachedUser(): User | null {
+  if (typeof window === "undefined") return null;
   try {
-    return JSON.parse(localStorage.getItem(REGISTRY_KEY) || "[]");
+    const raw = localStorage.getItem(USER_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
   } catch {
-    return [];
+    return null;
   }
 }
-
-function writeRegistry(users: User[]) {
-  localStorage.setItem(REGISTRY_KEY, JSON.stringify(users));
-}
-
-const seedUsers: User[] = [
-  {
-    id: "u-demo-student",
-    name: "Aisha Rahman",
-    email: "student@demo.io",
-    role: "student",
-    onboarded: true,
-    gender: "female",
-    targetMonth: "August",
-    targetYear: 2026,
-    targetScore: 7.5,
-  },
-  {
-    id: "u-demo-instructor",
-    name: "Mr. Daniel Cole",
-    email: "instructor@demo.io",
-    role: "instructor",
-    onboarded: true,
-  },
-  {
-    id: "u-demo-admin",
-    name: "Admin Office",
-    email: "admin@demo.io",
-    role: "admin",
-    onboarded: true,
-  },
-];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const existing = readRegistry();
-    if (existing.length === 0) writeRegistry(seedUsers);
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      try {
-        setUser(JSON.parse(raw));
-      } catch {
-        /* noop */
-      }
-    }
-    setReady(true);
-  }, []);
-
   const persist = (u: User | null) => {
     setUser(u);
-    if (typeof window !== "undefined") {
-      if (u) localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
-      else localStorage.removeItem(STORAGE_KEY);
+    if (typeof window === "undefined") return;
+    try {
+      if (u) localStorage.setItem(USER_CACHE_KEY, JSON.stringify(u));
+      else localStorage.removeItem(USER_CACHE_KEY);
+    } catch {
+      /* noop */
     }
   };
 
-  const signup: AuthContextValue["signup"] = ({ name, email, password, role, gender }) => {
-    const users = readRegistry();
-    const existing = users.find((u) => u.email === email);
-    if (existing) {
-      persist(existing);
-      return existing;
-    }
-    const newUser: User = {
-      id: `u-${Date.now()}`,
-      name,
-      email,
-      role,
-      onboarded: role !== "student",
-      ...(gender ? { gender } : {}),
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const token = getToken();
+      if (!token) {
+        setReady(true);
+        return;
+      }
+      // Show the cached profile immediately, then confirm against the
+      // server (catches revoked/expired sessions and picks up any changes
+      // made from another device).
+      const cached = readCachedUser();
+      if (cached) setUser(cached);
+      try {
+        const { user: fresh } = await apiFetch<{ user: User }>("/api/auth/me");
+        if (!cancelled) persist(fresh);
+      } catch {
+        if (!cancelled) {
+          setToken(null);
+          persist(null);
+        }
+      } finally {
+        if (!cancelled) setReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
     };
-    writeRegistry([...users, newUser]);
-    persist(newUser);
-    return newUser;
+  }, []);
+
+  const signup: AuthContextValue["signup"] = async ({ name, email, password, role, gender }) => {
+    const { user: u, token } = await apiFetch<{ user: User; token: string }>("/api/auth/signup", {
+      method: "POST",
+      body: JSON.stringify({ name, email, password, role, gender }),
+    });
+    setToken(token);
+    persist(u);
+    return u;
   };
 
-  const login: AuthContextValue["login"] = (email, role) => {
-    const users = readRegistry();
-    const found = users.find((u) => u.email === email && u.role === role);
-    if (!found) return null;
-    persist(found);
-    return found;
+  const login: AuthContextValue["login"] = async (email, password, role) => {
+    const { user: u, token } = await apiFetch<{ user: User; token: string }>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password, role }),
+    });
+    setToken(token);
+    persist(u);
+    return u;
   };
 
-  const logout = () => persist(null);
+  const logout = () => {
+    // Best-effort server-side revoke; local session is cleared regardless.
+    apiFetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    setToken(null);
+    persist(null);
+  };
 
   const updateProfile: AuthContextValue["updateProfile"] = (patch) => {
     if (!user) return;
-    const updated = { ...user, ...patch };
-    persist(updated);
-    const users = readRegistry();
-    writeRegistry(users.map((u) => (u.id === updated.id ? updated : u)));
+    // Optimistic local update so the UI feels instant; reconciled with the
+    // server's response (e.g. a data: URL avatar becomes a /api/files/id URL).
+    persist({ ...user, ...patch });
+    apiFetch<{ user: User }>("/api/me", { method: "PATCH", body: JSON.stringify(patch) })
+      .then(({ user: fresh }) => persist(fresh))
+      .catch((err) => {
+        console.error("Failed to save profile changes", err);
+      });
+  };
+
+  const changeCredentials: AuthContextValue["changeCredentials"] = async (data) => {
+    const { user: u, token } = await apiFetch<{ user: User; token: string }>("/api/me/credentials", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+    setToken(token);
+    persist(u);
+    return u;
   };
 
   return (
-    <AuthContext.Provider value={{ user, ready, signup, login, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, ready, signup, login, logout, updateProfile, changeCredentials }}>
       {children}
     </AuthContext.Provider>
   );
@@ -167,3 +170,5 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
 }
+
+export { ApiError };

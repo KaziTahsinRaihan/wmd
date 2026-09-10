@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Gender, Role, useAuth } from "@/lib/auth";
+import { ApiError, Gender, Role, useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { GraduationCap, UserCog, ShieldCheck } from "lucide-react";
 
@@ -26,16 +26,23 @@ const roleOptions: { value: Role; label: string; description: string; icon: any 
   },
 ];
 
+// Signup never offers "admin" — the platform is seeded with one admin
+// account (see server/.env), and only an existing admin can promote/create
+// other admins from the dashboard.
+const signupRoleOptions = roleOptions.filter((r) => r.value !== "admin");
+
 function RoleSelector({
   value,
   onChange,
+  options = roleOptions,
 }: {
   value: Role;
   onChange: (r: Role) => void;
+  options?: typeof roleOptions;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {roleOptions.map((r) => {
+    <div className={`grid gap-2 ${options.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+      {options.map((r) => {
         const Icon = r.icon;
         const active = value === r.value;
         return (
@@ -67,32 +74,44 @@ function destinationFor(role: Role) {
 export function SignupForm() {
   const router = useRouter();
   const { signup } = useAuth();
-  const [role, setRole] = useState<Role>("student");
+  const [role, setRole] = useState<Exclude<Role, "admin">>("student");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [gender, setGender] = useState<Gender | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!name.trim() || !email.trim() || !password) {
       setError("Please complete all fields.");
       return;
     }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
     if (role === "student" && !gender) {
       setError("Please select your gender. This decides which voice practice room you can enter.");
       return;
     }
-    const u = signup({
-      name,
-      email,
-      password,
-      role,
-      ...(role === "student" && gender ? { gender } : {}),
-    });
-    router.push(destinationFor(u.role));
+    setSubmitting(true);
+    try {
+      const u = await signup({
+        name,
+        email,
+        password,
+        role,
+        ...(role === "student" && gender ? { gender } : {}),
+      });
+      router.push(destinationFor(u.role));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -101,7 +120,7 @@ export function SignupForm() {
         <span className="mb-2 block text-xs uppercase tracking-wide text-white/50">
           I am signing up as
         </span>
-        <RoleSelector value={role} onChange={setRole} />
+        <RoleSelector value={role} onChange={(r) => setRole(r as Exclude<Role, "admin">)} options={signupRoleOptions} />
         <p className="mt-2 text-xs text-white/50">
           {roleOptions.find((r) => r.value === role)?.description}
         </p>
@@ -167,8 +186,8 @@ export function SignupForm() {
       )}
 
       {error && <p className="text-sm text-red-400">{error}</p>}
-      <button className="btn-gold w-full" type="submit">
-        Create account
+      <button className="btn-gold w-full" type="submit" disabled={submitting}>
+        {submitting ? "Creating account…" : "Create account"}
       </button>
     </form>
   );
@@ -216,23 +235,24 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const fillDemo = () => {
-    if (role === "student") setEmail("student@demo.io");
-    else if (role === "instructor") setEmail("instructor@demo.io");
-    else setEmail("admin@demo.io");
-    setPassword("demo");
-  };
-
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const u = login(email, role);
-    if (!u) {
-      setError("No account found for that role + email. Try signing up first.");
+    if (!email.trim() || !password) {
+      setError("Please enter your email and password.");
       return;
     }
-    router.push(destinationFor(u.role));
+    setSubmitting(true);
+    try {
+      const u = await login(email, password, role);
+      router.push(destinationFor(u.role));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -269,15 +289,8 @@ export function LoginForm() {
       </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
       <div className="flex flex-col gap-2">
-        <button className="btn-gold w-full" type="submit">
-          Log in
-        </button>
-        <button
-          type="button"
-          onClick={fillDemo}
-          className="btn-ghost w-full justify-center"
-        >
-          Use demo {role} credentials
+        <button className="btn-gold w-full" type="submit" disabled={submitting}>
+          {submitting ? "Logging in…" : "Log in"}
         </button>
       </div>
     </form>
